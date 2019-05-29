@@ -29,22 +29,16 @@
                 en: {
                     "welcome": "Welcome.",
                     "name": "name",
-                    "what_is_your_name": "What is your name?",
+                    "what_is_your_name": "How can I help you?",
                     "hello": "Hello $1",
-                    "added_to_database": "Hello $1, I've added you to the database!",
+                    "added_to_database": "Hello $1, your ticket have been submited!",
                     "database_contents": "Database contents: "
-                },
-                ja: {
-                    "welcome": "ようこそ。",
-                    "name": "名前",
-                    "what_is_your_name": "お名前を教えてください。",
-                    "hello": "こんにちは $1",
-                    "added_to_database": "こんにちは $1 さん、あなたをデータベースに追加しました。",
-                    "database_contents": "データベースの内容: "
                 }
             } );
             $('body').i18n();
-            $('#user_name').attr("placeholder", $.i18n('name') );
+            $('#user_name').attr("placeholder", $.i18n('Name') );
+            $('#user_email').attr("placeholder", $.i18n('Enter email') );
+            $('#description').attr("placeholder", $.i18n('Describe your problem') );
         });
         </script>
 
@@ -56,7 +50,10 @@
         <div id="nameInput" class="input-group-lg center-block helloInput">
             <p class="lead" data-i18n="what_is_your_name"></p>
             <input id="user_name" type="text" class="form-control" aria-describedby="sizing-addon1" value="" />
+            <input id="user_email" type="email" class="form-control" aria-describedby="sizing-addon1" value="" />
+            <textarea id="description" class="form-control" aria-describedby="sizing-addon1" value="" rows="3"></textarea>
         </div>
+        <div><button onClick="sendData()">Teste</button></div>
         <p id="response" class="lead text-center"></p>
 
         <p id="databaseNames" class="lead text-center"></p>
@@ -75,15 +72,18 @@
 
 <script>
     	//Submit data when enter key is pressed
-        $('#user_name').keydown(function(e) {
-        	var name = $('#user_name').val();
-            if (e.which == 13 && name.length > 0) { //catch Enter key
+        function sendData() {
+            var name = $('#user_name').val();
+            var email = $('#user_email').val();
+            var description = $('#description').val();
+            var d = new Date();
+            if (name.length > 0) { //catch Enter key
             	//POST request to API to create a new visitor entry in the database
                 $.ajax({
 				  method: "POST",
 				  url: "./api/visitors",
 				  contentType: "application/json",
-				  data: JSON.stringify({name: name })
+				  data: JSON.stringify({name: name, email: email, description: description, datetime: d})
 				})
                 .done(function(data) {
                     if(data && data.name){
@@ -99,7 +99,7 @@
                     getNames();
                 });
             }
-        });
+        };
 
         //Retrieve all the visitors from the database
         function getNames(){

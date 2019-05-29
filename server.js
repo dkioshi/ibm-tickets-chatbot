@@ -1,7 +1,9 @@
 var express = require("express");
 var app = express();
 var cfenv = require("cfenv");
-var bodyParser = require('body-parser')
+var bodyParser = require('body-parser');
+var cors = require('cors')({origin: true});
+const watson = require('./watson/client-watson');
 
 // parse application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({ extended: false }))
@@ -83,7 +85,10 @@ getAll.mongodb = function(response) {
 */
 app.post("/api/visitors", function (request, response) {
   var userName = request.body.name;
-  var doc = { "name" : userName };
+  var email = request.body.email;
+  var description = request.body.description;
+  var d = new Date();
+  var doc = { "name" : userName, "email" : email, "description" : description, "datetime" : d };
   if(!mydb) {
     console.log("No database.");
     response.send(doc);
@@ -184,6 +189,30 @@ if(cloudant) {
 
   vendor = 'cloudant';
 }
+
+/* Endpoint to Watson Assistant conversation.
+* Send a POST request to localhost:3000/watson with body
+* 
+*/
+
+app.get('/api/watson/', (req, res) => {
+  cors(req, res, () => {
+      const {text, context = {}} = req.body;
+
+      const params = {
+          input: {
+              text: 'quero abrir um chamado'
+          },
+          workspace_id: '4e98299c-4d7d-404e-b521-0a12a9da06e4',
+          context,
+      };
+  
+      watson.message(params, (err, response) => {
+          if (err) res.status(500).json(err);
+          res.json(response);
+      });  
+  });
+});
 
 //serve static file (index.html, images, css)
 app.use(express.static(__dirname + '/views'));
