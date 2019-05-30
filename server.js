@@ -78,12 +78,12 @@ getAll.mongodb = function(response) {
 }
 
 /* Endpoint to greet and add a new visitor to database.
-* Send a POST request to localhost:3000/api/visitors with body
+* Send a POST request to localhost:3000/api/tickets with body
 * {
 *   "name": "Bob"
 * }
 */
-app.post("/api/visitors", function (request, response) {
+app.post("/api/tickets", function (request, response) {
   var userName = request.body.name;
   var email = request.body.email;
   var description = request.body.description;
@@ -98,17 +98,17 @@ app.post("/api/visitors", function (request, response) {
 });
 
 /**
- * Endpoint to get a JSON array of all the visitors in the database
+ * Endpoint to get a JSON array of all the tickets in the database
  * REST API example:
  * <code>
- * GET http://localhost:3000/api/visitors
+ * GET http://localhost:3000/api/tickets
  * </code>
  *
  * Response:
  * [ "Bob", "Jane" ]
  * @return An array of all the visitor names
  */
-app.get("/api/visitors", function (request, response) {
+app.get("/api/tickets", function (request, response) {
   var names = [];
   if(!mydb) {
     response.json(names);
@@ -194,23 +194,29 @@ if(cloudant) {
 * Send a POST request to localhost:3000/watson with body
 * 
 */
-
-app.get('/api/watson/', (req, res) => {
+app.post("/api/watson/", (req, res) => {
   cors(req, res, () => {
       const {text, context = {}} = req.body;
 
       const params = {
-          input: {
-              text: 'quero abrir um chamado'
-          },
+          input: {text},
           workspace_id: '4e98299c-4d7d-404e-b521-0a12a9da06e4',
           context,
       };
   
       watson.message(params, (err, response) => {
-          if (err) res.status(500).json(err);
+          if (err) { 
+            res.status(500).json(err);
+          } else {
           res.json(response);
-      });  
+          //Intents
+          var watsonIntent = res.json(response.intents[0].intent);
+          //Watson's reply text
+          var watsonReply = res.json(response.output.text);
+          //Conversation ID, or context ID
+          var watsonContextId = res.json(response.context.conversation_id);
+          }
+      });
   });
 });
 
@@ -223,3 +229,5 @@ var port = process.env.PORT || 3000
 app.listen(port, function() {
     console.log("To view your app, open this link in your browser: http://localhost:" + port);
 });
+
+
