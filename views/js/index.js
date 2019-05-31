@@ -63,7 +63,21 @@
         
           chat.appendChild(div);
         };
-        
+
+
+        function addTicket(userData, confirmTicket){
+            if(confirmTicket.confirm === "true"){
+                console.log(userData, confirmTicket);
+                $.ajax({
+                    method: "POST",
+                    url: "./api/tickets",
+                    contentType: "application/json",
+                    data: JSON.stringify({name: userData.name, email: userData.email, description: userData.description, datetime: userData.data})
+                })
+            };
+          };
+      
+
         const getWatson = async (text = '') => {
           const uri = './api/watson';
         
@@ -77,11 +91,16 @@
           })).json();
         
           context = response.context;
+          const d = new Date();
+          const userData = {name : context.name, email : context.email, date : d, description : context.description};
+          const confirmTicket = {confirm: context.criarTicket}
         
           const template = chatTemplate(response.output.text, 'watson');
         
           addTemplate(template);
+          addTicket(userData, confirmTicket);
         };
+        
         
         textInput.addEventListener('keydown', (event) => {
             if (event.keyCode === 13 && textInput.value) {
