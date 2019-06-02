@@ -2,7 +2,7 @@ var express = require("express");
 var app = express();
 var cfenv = require("cfenv");
 var bodyParser = require('body-parser');
-var cors = require('cors')({origin: true});
+var cors = require('cors')({ origin: true });
 const watson = require('./watson/client-watson');
 
 // parse application/x-www-form-urlencoded
@@ -13,8 +13,8 @@ app.use(bodyParser.json())
 
 let mydb, cloudant;
 var vendor; // Because the MongoDB and Cloudant use different API commands, we
-            // have to check which command should be used based on the database
-            // vendor.
+// have to check which command should be used based on the database
+// vendor.
 var dbName = 'mydb';
 
 // Separate functions are provided for inserting/retrieving content from
@@ -25,8 +25,8 @@ var dbName = 'mydb';
 var insertOne = {};
 var getAll = {};
 
-insertOne.cloudant = function(doc, response) {
-  mydb.insert(doc, function(err, body, header) {
+insertOne.cloudant = function (doc, response) {
+  mydb.insert(doc, function (err, body, header) {
     if (err) {
       console.log('[mydb.insert] ', err.message);
       response.send("Error");
@@ -37,24 +37,24 @@ insertOne.cloudant = function(doc, response) {
   });
 }
 
-getAll.cloudant = function(response) {
-  var names = [];  
-  mydb.list({ include_docs: true }, function(err, body) {
+getAll.cloudant = function (response) {
+  var records = [];
+  mydb.list({ include_docs: true }, function (err, body) {
     if (!err) {
-      body.rows.forEach(function(row) {
-        if(row.doc.name)
-          names.push(row.doc.name);
+      body.rows.forEach(function (row) {
+        if (row.doc.email)
+          records.push(row.doc);
       });
-      response.json(names);
+      response.json(records);
     }
   });
-  //return names;
+  //return tickets;
 }
 
 let collectionName = 'mycollection'; // MongoDB requires a collection name.
 
-insertOne.mongodb = function(doc, response) {
-  mydb.collection(collectionName).insertOne(doc, function(err, body, header) {
+insertOne.mongodb = function (doc, response) {
+  mydb.collection(collectionName).insertOne(doc, function (err, body, header) {
     if (err) {
       console.log('[mydb.insertOne] ', err.message);
       response.send("Error");
@@ -65,11 +65,11 @@ insertOne.mongodb = function(doc, response) {
   });
 }
 
-getAll.mongodb = function(response) {
+getAll.mongodb = function (response) {
   var names = [];
-  mydb.collection(collectionName).find({}, {fields:{_id: 0, count: 0}}).toArray(function(err, result) {
+  mydb.collection(collectionName).find({}, { fields: { _id: 0, count: 0 } }).toArray(function (err, result) {
     if (!err) {
-      result.forEach(function(row) {
+      result.forEach(function (row) {
         names.push(row.name);
       });
       response.json(names);
@@ -88,8 +88,8 @@ app.post("/api/tickets", function (request, response) {
   var email = request.body.email;
   var description = request.body.description;
   var d = new Date();
-  var doc = { "name" : userName, "email" : email, "description" : description, "datetime" : d };
-  if(!mydb) {
+  var doc = { "name": userName, "email": email, "description": description, "datetime": d };
+  if (!mydb) {
     console.log("No database.");
     response.send(doc);
     return;
@@ -110,7 +110,7 @@ app.post("/api/tickets", function (request, response) {
  */
 app.get("/api/tickets", function (request, response) {
   var names = [];
-  if(!mydb) {
+  if (!mydb) {
     response.json(names);
     return;
   }
@@ -124,7 +124,7 @@ try {
   console.log("Loaded local VCAP", vcapLocal);
 } catch (e) { }
 
-const appEnvOpts = vcapLocal ? { vcap: vcapLocal} : {}
+const appEnvOpts = vcapLocal ? { vcap: vcapLocal } : {}
 
 const appEnv = cfenv.getAppEnv(appEnvOpts);
 
@@ -136,7 +136,7 @@ if (appEnv.services['compose-for-mongodb'] || appEnv.getService(/.*[Mm][Oo][Nn][
 
   // Initialize database with credentials
   if (appEnv.services['compose-for-mongodb']) {
-    MongoClient.connect(appEnv.services['compose-for-mongodb'][0].credentials.uri, null, function(err, db) {
+    MongoClient.connect(appEnv.services['compose-for-mongodb'][0].credentials.uri, null, function (err, db) {
       if (err) {
         console.log(err);
       } else {
@@ -147,7 +147,7 @@ if (appEnv.services['compose-for-mongodb'] || appEnv.getService(/.*[Mm][Oo][Nn][
   } else {
     // user-provided service with 'mongodb' in its name
     MongoClient.connect(appEnv.getService(/.*[Mm][Oo][Nn][Gg][Oo].*/).credentials.uri, null,
-      function(err, db) {
+      function (err, db) {
         if (err) {
           console.log(err);
         } else {
@@ -168,19 +168,19 @@ if (appEnv.services['compose-for-mongodb'] || appEnv.getService(/.*[Mm][Oo][Nn][
     // CF service named 'cloudantNoSQLDB'
     cloudant = Cloudant(appEnv.services['cloudantNoSQLDB'][0].credentials);
   } else {
-     // user-provided service with 'cloudant' in its name
-     cloudant = Cloudant(appEnv.getService(/cloudant/).credentials);
+    // user-provided service with 'cloudant' in its name
+    cloudant = Cloudant(appEnv.getService(/cloudant/).credentials);
   }
-} else if (process.env.CLOUDANT_URL){
+} else if (process.env.CLOUDANT_URL) {
   cloudant = Cloudant(process.env.CLOUDANT_URL);
 }
-if(cloudant) {
+if (cloudant) {
   //database name
   dbName = 'mydb';
 
   // Create a new "mydb" database.
-  cloudant.db.create(dbName, function(err, data) {
-    if(!err) //err if database doesn't already exists
+  cloudant.db.create(dbName, function (err, data) {
+    if (!err) //err if database doesn't already exists
       console.log("Created database: " + dbName);
   });
 
@@ -192,31 +192,24 @@ if(cloudant) {
 
 /* Endpoint to Watson Assistant conversation.
 * Send a POST request to localhost:3000/watson with body
-* 
 */
 app.post("/api/watson/", (req, res) => {
   cors(req, res, () => {
-      const {text, context = {}} = req.body;
+    const { text, context = {} } = req.body;
 
-      const params = {
-          input: {text},
-          workspace_id: '4e98299c-4d7d-404e-b521-0a12a9da06e4',
-          context,
-      };
-  
-      watson.message(params, (err, response) => {
-          if (err) { 
-            res.status(500).json(err);
-          } else {
-          res.json(response);
-          //Intents
-          var watsonIntent = res.json(response.intents[0].intent);
-          //Watson's reply text
-          var watsonReply = res.json(response.output.text);
-          //Conversation ID, or context ID
-          var watsonContextId = res.json(response.context.conversation_id);
-          }
-      });
+    const params = {
+      input: { text },
+      workspace_id: '4e98299c-4d7d-404e-b521-0a12a9da06e4',
+      context,
+    };
+
+    watson.message(params, (err, response) => {
+      if (err) {
+        res.status(500).json(err);
+      } else {
+        res.json(response);
+      }
+    });
   });
 });
 
@@ -226,8 +219,8 @@ app.use(express.static(__dirname + '/views'));
 
 
 var port = process.env.PORT || 3000
-app.listen(port, function() {
-    console.log("To view your app, open this link in your browser: http://localhost:" + port);
+app.listen(port, function () {
+  console.log("To view your app, open this link in your browser: http://localhost:" + port);
 });
 
 
