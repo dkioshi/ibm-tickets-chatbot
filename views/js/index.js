@@ -1,15 +1,5 @@
 //When document is loaded
 $(document).ready(function () {
-    $.i18n().load({
-        en: {
-            "welcome": "Welcome.",
-            "name": "name",
-            "what_is_your_name": "How can I help you?",
-            "hello": "Hello $1",
-            "added_to_database": "Hello $1, your ticket have been submited!",
-            "database_contents": "Database contents: "
-        }
-    });
     $('body').i18n();
     $('#user_name').attr("placeholder", $.i18n('Name'));
     $('#user_email').attr("placeholder", $.i18n('Enter email'));
@@ -33,38 +23,18 @@ function sendData() {
             .done(function (data) {
                 if (data && data.name) {
                     if (data._id)
-                        $('#response').html($.i18n('added_to_database', AntiXSS.sanitizeInput(data.name)));
-                    else
-                        $('#response').html($.i18n('hello', AntiXSS.sanitizeInput(data.name)));
+                        $('#response').html($.i18n('Enviado!', AntiXSS.sanitizeInput(data.name)));
                 }
                 else {
                     $('#response').html(AntiXSS.sanitizeInput(data));
                 }
-                $('#nameInput').hide();
-                getNames();
             });
+        //Clean the inputs
+        var name = $('#user_name').val('');
+        var email = $('#user_email').val('');
+        var description = $('#description').val('');
     }
 };
-
-//Retrieve all the tickets from the database
-function getNames() {
-    $.get("./api/tickets")
-        .done(function (data) {
-            if (data.length > 0) {
-                data.forEach(function (element, index) {
-                    //if (data[index].email === "jonsnow@email.com.br"){
-                    data[index] = AntiXSS.sanitizeInput(element);
-                    console.log(data[index]);
-                    // }
-
-                });
-                //$('#databaseNames').html($.i18n('database_contents') + JSON.stringify(data));
-            }
-        });
-}
-
-//Call getNames on page load.
-getNames();
 
 const textInput = document.getElementById('textInput');
 const chat = document.getElementById('chat');
@@ -92,7 +62,6 @@ const addTemplate = (template) => {
 //Validates if the ticket is ready to be created and, if so, send it to the DB
 function addTicket(userData, confirmTicket) {
     if (confirmTicket.confirm === "true") {
-        console.log(userData, confirmTicket);
         $.ajax({
             method: "POST",
             url: "./api/tickets",
@@ -106,24 +75,22 @@ function addTicket(userData, confirmTicket) {
 var checkConsult = false;
 function getTicket(checkData, consultTicket) {
     if (consultTicket.confirm === "true" && checkConsult == false) {
-        console.log(checkData, consultTicket);
+        //Get the tickets from the database
         $.get("./api/tickets")
             .done(function (data) {
                 if (data.length > 0) {
                     data.forEach(function (element, index) {
                         //Compare the user input (email and name) with the data returned
                         if (data[index].email === checkData.email && data[index].name === checkData.name) {
-                            //data[index] = AntiXSS.sanitizeInput(element);
-                            console.log(data[index]);
-                            console.log("sucesso");
-                            var ticket = ("Nome: "+data[index].name+"<br>Email: "+data[index].email+"<br>Data/Hora: "+data[index].datetime+"<br>Descrição: "+data[index].description);
+                            //Set the message that will be sent in the chat along with the ticket
+                            var ticket = ("Nome: " + data[index].name + "<br>Email: " + data[index].email + "<br>Data/Hora: " + data[index].datetime + "<br>Descrição: " + data[index].description);
                             var template = chatTemplate(ticket, 'watson');
                             addTemplate(template);
+                            //Prevent this method being called all the time after a consult
                             checkConsult = true;
                         }
 
                     });
-                    //$('#databaseNames').html($.i18n('database_contents') + JSON.stringify(data));
                 }
             });
     };
@@ -181,3 +148,13 @@ function sendWatson() {
 };
 //Load Watson Assistant on page load
 getWatson();
+
+//These methods expand and collapse the chat
+function collapseChat() {
+    $('#chatColumn').addClass("collapse");
+    $('#expandBtn').removeClass("collapse");
+};
+function expandChat() {
+    $('#expandBtn').addClass("collapse");
+    $('#chatColumn').removeClass("collapse");
+};
